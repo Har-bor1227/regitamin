@@ -45,7 +45,7 @@ function normalizePhone(value: string) {
 }
 
 export default function CheckoutPageContent() {
-  const { items } = useCart();
+const {items,isReady,} = useCart();
   const { phone } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -154,6 +154,27 @@ export default function CheckoutPageContent() {
       setLoading(false);
     }
   };
+  if (!isReady) {
+  return (
+    <main className="min-h-[70vh] bg-[#fffdf9]">
+      <div className="container flex min-h-[70vh] items-center justify-center py-12">
+        <section className="w-full max-w-lg rounded-[30px] border border-border bg-white p-8 text-center shadow-[0_15px_50px_rgba(30,20,10,0.06)]">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Loader2 className="h-7 w-7 animate-spin" />
+          </div>
+
+          <h1 className="mt-5 text-xl font-black text-slate-900">
+            در حال آماده‌سازی سبد خرید
+          </h1>
+
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">
+            اطلاعات سبد خرید شما در حال بارگذاری است.
+          </p>
+        </section>
+      </div>
+    </main>
+  );
+}
 
   if (items.length === 0) {
     return (

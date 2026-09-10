@@ -25,12 +25,12 @@ const SERVICE_LINKS = [
 
 const SOCIAL_LINKS = [
   {
-    href: 'https://wa.me/989135055775',
+    href: 'https://wa.me/989131051763',
     label: 'واتساپ',
     icon: MessageCircle,
   },
   {
-    href: 'tel:+989135055775',
+    href: 'tel:+989131051763',
     label: 'تماس تلفنی',
     icon: Phone,
   },
@@ -47,11 +47,11 @@ const CONTACT_ITEMS = [
     label: 'شماره تماس',
     content: (
       <a
-        href="tel:+989135055775"
+        href="tel:+989131051763"
         dir="ltr"
         className="font-semibold transition-colors hover:text-[var(--brand-orange)]"
       >
-        0913 505 5775
+        0913 105 1763
       </a>
     ),
   },
@@ -60,7 +60,7 @@ const CONTACT_ITEMS = [
     label: 'آدرس',
     content: (
       <span>
-        اصفهان، شهرک صنعتی محمودآباد، خیابان ۲۸، ساختمان ماهفر
+        اصفهان _ خمینی شهر _ خیابان بوعلی _ ساختمان پارسیان _ طبقه 4​
       </span>
     ),
   },

@@ -14,10 +14,6 @@ import {
   failPaymentSession,
 } from '@/lib/payment-store';
 
-import {
-  getDietQuestionnaire,
-} from '@/lib/diet-questionnaire-store';
-
 const ZARINPAL_MERCHANT_ID =
   process.env.ZARINPAL_MERCHANT_ID || '';
 
@@ -42,53 +38,6 @@ function getWooAuth() {
   return Buffer.from(
     `${WOO_KEY}:${WOO_SECRET}`,
   ).toString('base64');
-}
-
-function buildQuestionnaireMeta(
-  questionnaire: {
-    id: string;
-    version: number;
-    answers: Record<string, unknown>;
-    completedAt?: number;
-  },
-) {
-  return [
-    {
-      key:
-        '_regitamin_questionnaire_session',
-      value:
-        questionnaire.id,
-    },
-
-    {
-      key:
-        '_regitamin_questionnaire_version',
-      value:
-        String(
-          questionnaire.version,
-        ),
-    },
-
-    {
-      key:
-        '_regitamin_questionnaire_answers',
-      value:
-        JSON.stringify(
-          questionnaire.answers,
-        ),
-    },
-
-    {
-      key:
-        '_regitamin_questionnaire_completed_at',
-      value:
-        questionnaire.completedAt
-          ? String(
-              questionnaire.completedAt,
-            )
-          : '',
-    },
-  ];
 }
 
 async function getOrCreateCustomer(
@@ -141,28 +90,19 @@ async function getOrCreateCustomer(
       `${WOO_API}/customers`,
       {
         method: 'POST',
-
         headers: {
-          Authorization:
-            `Basic ${auth}`,
-
+          Authorization: `Basic ${auth}`,
           'Content-Type':
             'application/json',
         },
-
         body: JSON.stringify({
-          username:
-            phone,
-
+          username: phone,
           phone,
-
           first_name:
             'کاربر',
-
           last_name:
             'رژیتامین',
         }),
-
         cache: 'no-store',
       },
     );
@@ -197,16 +137,13 @@ async function findExistingOrder(
 
   const response =
     await fetch(
-      `${WOO_API}/orders?per_page=100&page=1&orderby=date&order=desc`,
+      `${WOO_API}/orders?transaction_id=${encodeURIComponent(
+        authority,
+      )}&per_page=1`,
       {
         headers: {
-          Authorization:
-            `Basic ${auth}`,
-
-          Accept:
-            'application/json',
+          Authorization: `Basic ${auth}`,
         },
-
         cache: 'no-store',
       },
     );
@@ -220,71 +157,10 @@ async function findExistingOrder(
   const orders =
     await response.json();
 
-  if (
-    !Array.isArray(orders)
-  ) {
-    return null;
-  }
-
-  const existingOrder =
-    orders.find(
-      (order: any) =>
-        String(
-          order?.transaction_id ||
-            '',
-        ).trim() === authority,
-    );
-
-  return existingOrder || null;
-}
-
-async function updateWooOrderMeta(
-  orderId: number,
-  metaData: Array<{
-    key: string;
-    value: string;
-  }>,
-) {
-  const response =
-    await fetch(
-      `${WOO_API}/orders/${orderId}`,
-      {
-        method: 'PUT',
-
-        headers: {
-          Authorization:
-            `Basic ${getWooAuth()}`,
-
-          'Content-Type':
-            'application/json',
-
-          Accept:
-            'application/json',
-        },
-
-        body:
-          JSON.stringify({
-            meta_data:
-              metaData,
-          }),
-
-        cache: 'no-store',
-      },
-    );
-
-  if (!response.ok) {
-    const body =
-      await response.text();
-
-    console.error(
-      'WooCommerce order meta update failed:',
-      body,
-    );
-
-    return false;
-  }
-
-  return true;
+  return Array.isArray(orders) &&
+    orders.length > 0
+    ? orders[0]
+    : null;
 }
 
 export async function POST(
@@ -303,7 +179,6 @@ export async function POST(
      * amount و items عمداً نادیده گرفته می‌شوند.
      * منبع حقیقت Payment Session در Redis است.
      */
-
     if (!authority) {
       return NextResponse.json(
         {
@@ -337,13 +212,10 @@ export async function POST(
     ) {
       return NextResponse.json({
         success: true,
-
         refId:
           session.refId || '',
-
         orderId:
           session.orderId || null,
-
         message:
           'این پرداخت قبلاً با موفقیت ثبت شده است.',
       });
@@ -370,7 +242,6 @@ export async function POST(
     /*
      * فقط مالک Session اجازه Verify دارد.
      */
-
     const token =
       request.cookies.get(
         'auth_token',
@@ -406,61 +277,8 @@ export async function POST(
     }
 
     /*
-     * =====================================================
-     * Questionnaire
-     *
-     * Questionnaire باید متعلق به همان کاربر
-     * و تکمیل‌شده باشد.
-     *
-     * نکته:
-     * اگر به هر دلیل Redis Questionnaire از بین رفته
-     * باشد، Payment Session را failed نمی‌کنیم؛
-     * چون ممکن است تراکنش در زرین‌پال واقعاً موفق شده باشد.
-     * Session در وضعیت processing می‌ماند تا قابل retry باشد.
-     * =====================================================
-     */
-
-    const questionnaire =
-      await getDietQuestionnaire({
-        phone:
-          session.phone,
-
-        sessionId:
-          session.metadata
-            .questionnaireSessionId,
-      });
-
-    if (!questionnaire) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            'اطلاعات فرم رژیم پیدا نشد. لطفاً عملیات تأیید را دوباره انجام دهید.',
-        },
-        { status: 409 },
-      );
-    }
-
-    if (
-      questionnaire.status !==
-      'completed'
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            'فرم رژیم هنوز تکمیل نشده است.',
-        },
-        { status: 409 },
-      );
-    }
-
-    /*
-     * =====================================================
      * جلوگیری از Callbackهای همزمان
-     * =====================================================
      */
-
     const claim =
       await claimPaymentSession(
         session.id,
@@ -477,13 +295,10 @@ export async function POST(
 
       return NextResponse.json({
         success: true,
-
         refId:
           latest?.refId || '',
-
         orderId:
           latest?.orderId || null,
-
         message:
           'پرداخت قبلاً ثبت شده است.',
       });
@@ -504,16 +319,11 @@ export async function POST(
       ) {
         return NextResponse.json({
           success: true,
-
-          status:
-            'completed',
-
+          status: 'completed',
           refId:
             latestSession.refId || '',
-
           orderId:
             latestSession.orderId || null,
-
           message:
             'پرداخت با موفقیت انجام شد و سفارش شما ثبت شده است.',
         });
@@ -521,45 +331,33 @@ export async function POST(
 
       return NextResponse.json({
         success: true,
-
-        status:
-          'processing',
-
+        status: 'processing',
         message:
           'تراکنش در حال بررسی است.',
       });
     }
 
     /*
-     * =====================================================
      * Verify با مبلغ ذخیره‌شده در Redis
-     * =====================================================
      */
-
     const verifyResponse =
       await fetch(
         ZARINPAL_VERIFY_URL,
         {
           method: 'POST',
-
           headers: {
             'Content-Type':
               'application/json',
-
             Accept:
               'application/json',
           },
-
           body: JSON.stringify({
             merchant_id:
               ZARINPAL_MERCHANT_ID,
-
             amount:
               session.amountRials,
-
             authority,
           }),
-
           cache: 'no-store',
         },
       );
@@ -580,7 +378,6 @@ export async function POST(
 
       return NextResponse.json({
         success: false,
-
         message:
           verifyData.errors
             ?.message ||
@@ -589,66 +386,37 @@ export async function POST(
     }
 
     /*
-     * =====================================================
      * اگر قبلاً Order ساخته شده باشد
      * دوباره نساز.
-     * =====================================================
      */
-
     const existingOrder =
       await findExistingOrder(
         authority,
       );
 
     if (existingOrder) {
-      const refId =
-        String(
-          verifyData.data
-            ?.ref_id || '',
-        );
-
-      /*
-       * Questionnaire Meta را حتی در مسیر
-       * existingOrder نیز ثبت/به‌روزرسانی می‌کنیم.
-       */
-
-      await updateWooOrderMeta(
-        Number(
-          existingOrder.id,
-        ),
-        buildQuestionnaireMeta(
-          questionnaire,
-        ),
+      const refId = String(
+        verifyData.data
+          ?.ref_id || '',
       );
 
       await completePaymentSession(
         session.id,
-
         Number(
           existingOrder.id,
         ),
-
         refId,
       );
 
       return NextResponse.json({
         success: true,
-
         refId,
-
         orderId:
           existingOrder.id,
-
         message:
           'پرداخت با موفقیت انجام شد و سفارش شما ثبت شده است.',
       });
     }
-
-    /*
-     * =====================================================
-     * Customer
-     * =====================================================
-     */
 
     let customerId =
       session.customerId ||
@@ -661,31 +429,15 @@ export async function POST(
         );
     }
 
-    const finalCustomerId =
-      Number(
-        session.customerId ||
-          customerId ||
-          0,
-      );
-
-    /*
-     * =====================================================
-     * Line Items
-     * =====================================================
-     */
-
     const lineItems =
       session.items.map(
         (item) => ({
           product_id:
             item.id,
 
-          ...(item.variationId
-            ? {
-                variation_id:
-                  item.variationId,
-              }
-            : {}),
+          variation_id:
+            item.variationId ||
+            0,
 
           quantity:
             item.quantity,
@@ -693,21 +445,18 @@ export async function POST(
       );
 
     /*
-     * =====================================================
-     * Questionnaire Meta
-     * =====================================================
+     * اطلاعات اختصاصی سفارش
+     * از Payment Session در Redis خوانده می‌شوند.
      */
+    const virtualNetworkId =
+      session.metadata
+        ?.virtualNetworkId ||
+      '';
 
-    const questionnaireMeta =
-      buildQuestionnaireMeta(
-        questionnaire,
-      );
-
-    /*
-     * =====================================================
-     * WooCommerce Order
-     * =====================================================
-     */
+    const questionnaireSessionId =
+      session.metadata
+        ?.questionnaireSessionId ||
+      '';
 
     const orderData: Record<
       string,
@@ -719,8 +468,7 @@ export async function POST(
       payment_method_title:
         'زرین‌پال',
 
-      set_paid:
-        true,
+      set_paid: true,
 
       status:
         'processing',
@@ -740,21 +488,12 @@ export async function POST(
 
         last_name:
           'رژیتامین',
-
-        address_1:
-          session.metadata
-            .address,
-
-        postcode:
-          session.metadata
-            .postalCode,
       },
 
       meta_data: [
         {
           key:
             '_regitamin_payment_session',
-
           value:
             session.id,
         },
@@ -762,32 +501,34 @@ export async function POST(
         {
           key:
             '_regitamin_paid_amount_toman',
-
           value:
             String(
               session.amountToman,
             ),
         },
 
-        ...questionnaireMeta,
+        {
+          key:
+            '_regitamin_virtual_network_id',
+          value:
+            virtualNetworkId,
+        },
+
+        {
+          key:
+            '_regitamin_questionnaire_session_id',
+          value:
+            questionnaireSessionId,
+        },
       ],
     };
 
     if (
-      Number.isInteger(
-        finalCustomerId,
-      ) &&
-      finalCustomerId > 0
+      customerId > 0
     ) {
       orderData.customer_id =
-        finalCustomerId;
+        customerId;
     }
-
-    /*
-     * =====================================================
-     * Create WooCommerce Order
-     * =====================================================
-     */
 
     const orderResponse =
       await fetch(
@@ -796,20 +537,14 @@ export async function POST(
           method: 'POST',
 
           headers: {
-            Authorization:
-              `Basic ${getWooAuth()}`,
-
+            Authorization: `Basic ${getWooAuth()}`,
             'Content-Type':
-              'application/json',
-
-            Accept:
               'application/json',
           },
 
-          body:
-            JSON.stringify(
-              orderData,
-            ),
+          body: JSON.stringify(
+            orderData,
+          ),
 
           cache: 'no-store',
         },
@@ -828,16 +563,12 @@ export async function POST(
 
       /*
        * Payment موفق بوده ولی ساخت Order
-       * ناموفق شده است.
-       *
-       * Session را completed نمی‌کنیم تا
-       * امکان retry وجود داشته باشد.
+       * ناموفق شده است؛ این حالت باید
+       * برای retry قابل تشخیص بماند.
        */
-
       return NextResponse.json(
         {
           success: false,
-
           message:
             'پرداخت موفق بود اما ثبت سفارش انجام نشد. اطلاعات تراکنش ثبت شده است.',
         },
@@ -848,36 +579,22 @@ export async function POST(
     const order =
       await orderResponse.json();
 
-    const refId =
-      String(
-        verifyData.data
-          ?.ref_id || '',
-      );
-
-    /*
-     * =====================================================
-     * Complete Payment Session
-     * =====================================================
-     */
+    const refId = String(
+      verifyData.data
+        ?.ref_id || '',
+    );
 
     await completePaymentSession(
       session.id,
-
-      Number(
-        order.id,
-      ),
-
+      Number(order.id),
       refId,
     );
 
     return NextResponse.json({
       success: true,
-
       refId,
-
       orderId:
         order.id,
-
       message:
         'پرداخت با موفقیت انجام شد و سفارش شما ثبت گردید.',
     });
@@ -890,7 +607,6 @@ export async function POST(
     return NextResponse.json(
       {
         success: false,
-
         message:
           'خطایی هنگام تأیید پرداخت رخ داد.',
       },

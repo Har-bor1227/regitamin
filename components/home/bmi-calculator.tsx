@@ -163,11 +163,20 @@ export function BmiCalculator() {
                 </h3>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <BmiInput icon={Scale} label="وزن" value={weight} onChange={handleWeightChange} placeholder="مثلاً 72" unit="کیلوگرم" className={inputClass} />
                 <BmiInput icon={Ruler} label="قد" value={height} onChange={handleHeightChange} placeholder="مثلاً 175" unit="سانتی‌متر" className={inputClass} />
                 <BmiInput icon={CalendarDays} label="سن" value={age} onChange={setAge} placeholder="مثلاً 28" unit="سال" className={inputClass} />
-                <BmiInput icon={CircleGauge} label="دور مچ" value={wrist} onChange={setWrist} placeholder="مثلاً 17" unit="سانتی‌متر" className={inputClass} />
+                <BmiInput
+  icon={CircleGauge}
+  label="دور مچ"
+  value={wrist}
+  onChange={setWrist}
+  placeholder="مثلاً 17"
+  unit="سانتی‌متر"
+  className={inputClass}
+  optional
+/>
               </div>
 
               <div className="mt-6">
@@ -266,6 +275,7 @@ function BmiInput({
   placeholder,
   unit,
   className,
+  optional = false,
 }: {
   icon: typeof Scale;
   label: string;
@@ -274,14 +284,22 @@ function BmiInput({
   placeholder: string;
   unit: string;
   className: string;
+  optional?: boolean;
 }) {
   return (
     <label className="block">
-      <span className="mb-2.5 flex items-center gap-2 text-sm font-bold text-slate-700">
-        <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-[var(--brand-orange)]/10 text-[var(--brand-orange-dark)]">
+      <span className="mb-2.5 flex items-center gap-2 text-xs font-bold text-slate-700 sm:text-sm">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[var(--brand-orange)]/10 text-[var(--brand-orange-dark)]">
           <Icon className="h-4 w-4" />
         </span>
-        {label}
+
+        <span>{label}</span>
+
+        {optional && (
+          <span className="text-[9px] font-medium text-slate-400 sm:text-[10px]">
+            (اختیاری)
+          </span>
+        )}
       </span>
 
       <div className="relative">
@@ -289,11 +307,14 @@ function BmiInput({
           type="number"
           inputMode="decimal"
           value={value}
-          onChange={(event) => onChange(event.target.value)}
+          onChange={(event) =>
+            onChange(event.target.value)
+          }
           placeholder={placeholder}
-          className={`${className} pl-20`}
+          className={`${className} pl-16 sm:pl-20`}
         />
-        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-medium text-slate-400">
+
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[9px] font-medium text-slate-400 sm:left-4 sm:text-[10px]">
           {unit}
         </span>
       </div>

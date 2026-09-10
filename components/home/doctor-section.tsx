@@ -76,8 +76,7 @@ export function DoctorSection() {
                 href="/about"
                 className="group inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-slate-950 px-6 text-xs font-black text-white shadow-[0_12px_28px_rgba(15,23,42,.12)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-800"
               >
-                بیشتر درباره رژیتامین
-                <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
+درباره رژیتامین                <ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
               </Link>
 
               <Link

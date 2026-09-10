@@ -36,12 +36,18 @@ export interface PaymentSessionItem {
 }
 
 export interface PaymentSessionMetadata {
+  /**
+   * آیدی شبکه مجازی که سفارش باید
+   * روی آن فعال شود.
+   */
+  virtualNetworkId: string;
 
-  address: string;
-  postalCode: string;
-
+  /**
+   * شناسه فرم رژیم مرتبط با سفارش.
+   */
   questionnaireSessionId: string;
 }
+
 export interface PaymentSession {
   id: string;
 
@@ -77,7 +83,7 @@ export interface PaymentSession {
   items: PaymentSessionItem[];
 
   /**
-   * اطلاعات دریافت سفارش
+   * اطلاعات تکمیلی سفارش
    */
   metadata: PaymentSessionMetadata;
 

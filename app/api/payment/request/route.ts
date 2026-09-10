@@ -95,27 +95,15 @@ function parsePrice(
     : 0;
 }
 
-function normalizeDigits(
+function isValidQuestionnaireSessionId(
   value: string,
 ) {
-  return value
-    .replace(/[۰-۹]/g, (digit) =>
-      String(
-        '۰۱۲۳۴۵۶۷۸۹'.indexOf(
-          digit,
-        ),
-      ),
-    )
-    .replace(/[٠-٩]/g, (digit) =>
-      String(
-        '٠١٢٣٤٥٦٧٨٩'.indexOf(
-          digit,
-        ),
-      ),
-    );
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value,
+  );
 }
 
-function normalizeAddress(
+function normalizeVirtualNetworkId(
   value: unknown,
 ) {
   if (
@@ -127,29 +115,7 @@ function normalizeAddress(
   return value
     .replace(/\s+/g, ' ')
     .trim()
-    .slice(0, 500);
-}
-
-function normalizePostalCode(
-  value: unknown,
-) {
-  if (
-    typeof value !== 'string'
-  ) {
-    return '';
-  }
-
-  return normalizeDigits(value)
-    .replace(/\D/g, '')
-    .slice(0, 10);
-}
-
-function isValidQuestionnaireSessionId(
-  value: string,
-) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value,
-  );
+    .slice(0, 120);
 }
 
 async function fetchWooProducts(
@@ -251,7 +217,7 @@ export async function POST(
      * 3. Request body
      *
      * فقط اطلاعات سفارش و شناسه پرسشنامه
-     * از Client دریافت می‌شوند.
+     * و آیدی شبکه مجازی از Client دریافت می‌شوند.
      *
      * amount / price / items از Client
      * به‌عنوان منبع حقیقت پذیرفته نمی‌شوند.
@@ -272,14 +238,9 @@ export async function POST(
         ? (body as Record<string, unknown>)
         : {};
 
-    const address =
-      normalizeAddress(
-        requestBody.address,
-      );
-
-    const postalCode =
-      normalizePostalCode(
-        requestBody.postalCode,
+    const virtualNetworkId =
+      normalizeVirtualNetworkId(
+        requestBody.virtualNetworkId,
       );
 
     const questionnaireSessionId =
@@ -289,20 +250,10 @@ export async function POST(
         : '';
 
     if (
-      address.length < 10
+      virtualNetworkId.length < 3
     ) {
       return errorResponse(
-        'آدرس کامل معتبر نیست.',
-      );
-    }
-
-    if (
-      !/^\d{10}$/.test(
-        postalCode,
-      )
-    ) {
-      return errorResponse(
-        'کد پستی باید دقیقاً ۱۰ رقم باشد.',
+        'آیدی شبکه مجازی معتبر نیست.',
       );
     }
 
@@ -741,8 +692,11 @@ export async function POST(
      * =====================================================
      * 10. Create server-side Payment Session
      *
-     * Questionnaire ID نیز در Session ذخیره می‌شود.
-     * خود پاسخ‌ها داخل Payment Session کپی نمی‌شوند.
+     * Questionnaire ID و Virtual Network ID
+     * در Session ذخیره می‌شوند.
+     *
+     * خود پاسخ‌های پرسشنامه داخل Payment Session
+     * کپی نمی‌شوند.
      * =====================================================
      */
 
@@ -769,8 +723,7 @@ export async function POST(
           paymentItems,
 
         metadata: {
-          address,
-          postalCode,
+          virtualNetworkId,
           questionnaireSessionId,
         },
       });

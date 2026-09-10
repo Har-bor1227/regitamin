@@ -22,8 +22,8 @@ const CONTACT_ITEMS = [
     icon: Phone,
     title: 'تماس تلفنی',
     label: 'پاسخگویی و راهنمایی',
-    value: '0913 505 5775',
-    href: 'tel:+989135055775',
+    value: '09131051763',
+    href: 'tel:+989131051763',
   },
   {
     icon: MessageCircle,
@@ -44,7 +44,7 @@ const CONTACT_ITEMS = [
     title: 'آدرس',
     label: 'موقعیت مجموعه',
     value:
-      'اصفهان، شهرک صنعتی محمودآباد، خیابان ۲۸، ساختمان ماهفر',
+      'اصفهان _ خمینی شهر _ خیابان بوعلی _ ساختمان پارسیان _ طبقه 4​',
     href: undefined,
   },
 ];

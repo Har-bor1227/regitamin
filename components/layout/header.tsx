@@ -111,15 +111,15 @@ export function Header() {
       >
         <div className="container flex h-[72px] items-center gap-2 sm:gap-3">
           {/* Mobile menu */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 shrink-0 rounded-xl md:hidden"
-            onClick={() => setMobileOpen(true)}
-            aria-label="باز کردن منو"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
+<Button
+  variant="ghost"
+  size="icon"
+  className="h-10 w-10 shrink-0 rounded-xl md:hidden"
+  onClick={() => setMobileOpen(true)}
+  aria-label="باز کردن منو"
+>
+  <Menu className="!h-7 !w-7" />
+</Button>
 
           {/* Logo */}
           <Link
