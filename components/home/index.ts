@@ -1,0 +1,12 @@
+export { default as HomePageContent } from './home-page-content';
+export { SectionHeading } from './section-heading';
+export { CartAddedPopup } from './cart-added-popup';
+export { DietCard } from './diet-card';
+export { AutoScrollProducts } from './auto-scroll-products';
+export { PopularDietsSection } from './popular-diets-section';
+export { BmiCalculator } from './bmi-calculator';
+export { WhyRegitamin } from './why-regitamin';
+export { DoctorSection } from './doctor-section';
+export { ProductShowcaseSection } from './product-showcase-section';
+export { BlogSection } from './blog-section';
+export { FinalCta } from './final-cta';

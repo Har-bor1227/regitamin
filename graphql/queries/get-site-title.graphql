@@ -1,0 +1,6 @@
+query GetSiteTitle {
+  generalSettings {
+    title
+    description
+  }
+}
