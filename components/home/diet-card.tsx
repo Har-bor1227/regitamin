@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -14,13 +15,15 @@ import {
   Trophy,
   TrendingDown,
 } from 'lucide-react';
+
 import { useCart } from '@/providers/cart-provider';
 import { useWishlist } from '@/providers/wishlist-provider';
 import type { ProductSummary } from '@/types/product';
 
 function formatPrice(value?: string | number | null) {
   const numeric = Number(value || 0);
-  return numeric ? numeric.toLocaleString('fa-IR') : '—';
+
+  return numeric > 0 ? numeric.toLocaleString('fa-IR') : '—';
 }
 
 function getDiscountPercent(product: ProductSummary) {
@@ -72,6 +75,7 @@ export function DietCard({
   onAdded,
 }: DietCardProps) {
   const { addItem } = useCart();
+
   const {
     addItem: addWishlist,
     removeItem,
@@ -91,6 +95,8 @@ export function DietCard({
     productGradients[iconIndex % productGradients.length] ||
     productGradients[0];
 
+  const productImage = product.images?.[0];
+
   const handleAddToCart = () => {
     addItem({
       id: product.id,
@@ -105,62 +111,85 @@ export function DietCard({
   };
 
   const toggleFavorite = () => {
-    favorite ? removeItem(product.id) : addWishlist(product.id);
+    if (favorite) {
+      removeItem(product.id);
+      return;
+    }
+
+    addWishlist(product.id);
   };
 
   return (
     <article
       dir="rtl"
       className={[
-        'group relative flex shrink-0 snap-start flex-col overflow-hidden border border-slate-200/80 bg-white shadow-[0_10px_35px_rgba(30,35,25,.045)] transition-all duration-500',
+        'group relative flex shrink-0 snap-start flex-col overflow-hidden rounded-[26px]',
+        'border border-orange-950/[0.06] bg-white',
+        'shadow-[0_12px_34px_rgba(15,23,42,0.07)]',
+        'transition-all duration-500 ease-out',
+        'hover:-translate-y-1 hover:border-orange-200/80',
+        'hover:shadow-[0_24px_50px_rgba(15,23,42,0.12)]',
         compact
-          ? 'w-[245px] min-w-[245px] rounded-[24px]'
-          : 'w-[265px] min-w-[265px] rounded-[26px] sm:w-[275px] sm:min-w-[275px]',
-        'hover:-translate-y-1.5 hover:border-orange-200 hover:shadow-[0_22px_50px_rgba(30,35,25,.10)]',
+          ? 'w-[252px] min-w-[252px]'
+          : 'w-[270px] min-w-[270px] sm:w-[286px] sm:min-w-[286px]',
       ].join(' ')}
     >
-      <div className="absolute inset-x-4 top-0 z-10 h-px bg-gradient-to-r from-transparent via-orange-300/90 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-7 top-0 z-20 h-px bg-gradient-to-r from-transparent via-[var(--brand-orange)]/75 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+      />
 
       <div
         className={[
-          'relative overflow-hidden',
-          'aspect-[1.08]',
-          visual === 'icon'
-            ? `bg-gradient-to-br ${gradient}`
-            : 'bg-[#FFF7F0]',
+          'relative overflow-hidden border-b border-orange-950/[0.05]',
+          'bg-gradient-to-br',
+          visual === 'image'
+            ? 'from-[#fff7f0] via-[#fffaf7] to-[#fff1e7]'
+            : gradient,
+          compact ? 'aspect-[1.02]' : 'aspect-[1.05]',
         ].join(' ')}
       >
         <div
           aria-hidden="true"
-          className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-orange-400/20 blur-3xl transition-all duration-700 group-hover:scale-125"
+          className="absolute -right-10 -top-10 h-36 w-36 rounded-full bg-orange-400/15 blur-3xl transition-transform duration-700 group-hover:scale-125"
         />
 
         <div
           aria-hidden="true"
-          className="absolute -bottom-14 -left-12 h-36 w-36 rounded-full bg-amber-300/20 blur-3xl"
+          className="absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-amber-300/20 blur-3xl transition-transform duration-700 group-hover:translate-x-2"
+        />
+
+        <div
+          aria-hidden="true"
+          className="absolute left-1/2 top-1/2 h-[70%] w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/40 blur-[2px]"
         />
 
         <Link
           href={`/product/${product.slug}`}
-          className="relative z-[1] flex h-full w-full items-center justify-center"
+          className="relative z-[1] block h-full w-full"
+          aria-label={`مشاهده ${product.name}`}
         >
-          {visual === 'image' && product.images?.[0] ? (
-            <Image
-              src={product.images[0].src}
-              alt={product.images[0].alt || product.name}
-              fill
-              sizes="(max-width: 640px) 245px, 275px"
-              className="object-contain p-6 transition duration-700 ease-out group-hover:scale-[1.06]"
-            />
+          {visual === 'image' && productImage ? (
+            <div className="absolute inset-5 rounded-[24px] border border-white/80 bg-white/55 shadow-[0_16px_38px_rgba(15,23,42,0.06)] backdrop-blur-sm transition-all duration-500 group-hover:bg-white/70 group-hover:shadow-[0_20px_44px_rgba(15,23,42,0.09)]">
+              <Image
+                src={productImage.src}
+                alt={productImage.alt || product.name}
+                fill
+                sizes="(max-width: 640px) 230px, 260px"
+                className="object-contain p-5 transition duration-700 ease-out group-hover:scale-[1.07]"
+              />
+            </div>
           ) : visual === 'image' ? (
-            <div className="flex h-16 w-16 items-center justify-center rounded-[22px] bg-white/85 shadow-sm backdrop-blur-sm">
-              <Leaf className="h-7 w-7 text-[var(--brand-orange-dark)]/35" />
+            <div className="flex h-full items-center justify-center">
+              <div className="flex h-20 w-20 items-center justify-center rounded-[24px] border border-white/90 bg-white/85 shadow-[0_16px_40px_rgba(15,23,42,0.10)]">
+                <Leaf className="h-8 w-8 text-[var(--brand-orange-dark)]/40" />
+              </div>
             </div>
           ) : (
             <div className="relative flex h-full w-full items-center justify-center">
-              <div className="absolute h-36 w-36 rounded-full border border-white/80 bg-white/35 shadow-[0_20px_55px_rgba(225,76,43,.15)] backdrop-blur-sm transition-transform duration-700 group-hover:scale-110" />
+              <div className="absolute h-36 w-36 rounded-full border border-white/80 bg-white/35 shadow-[0_20px_55px_rgba(225,76,43,0.15)] backdrop-blur-sm transition-transform duration-700 group-hover:scale-110" />
 
-              <div className="relative flex h-[84px] w-[84px] items-center justify-center rounded-[26px] border border-white/90 bg-white/80 shadow-[0_16px_40px_rgba(15,23,42,.10)] backdrop-blur-md transition-all duration-500 group-hover:scale-105 group-hover:-rotate-2">
+              <div className="relative flex h-[86px] w-[86px] items-center justify-center rounded-[28px] border border-white/95 bg-white/82 shadow-[0_16px_40px_rgba(15,23,42,0.10)] backdrop-blur-md transition-all duration-500 group-hover:-rotate-2 group-hover:scale-105">
                 <ProductIcon className="h-9 w-9 text-[var(--brand-orange-dark)]" />
               </div>
             </div>
@@ -168,8 +197,9 @@ export function DietCard({
         </Link>
 
         {discount > 0 && (
-          <div className="absolute right-3 top-3 z-[2] rounded-full bg-[var(--brand-orange-dark)] px-2.5 py-1 text-[9px] font-black text-white shadow-[0_8px_22px_rgba(225,76,43,.22)]">
-            {discount}٪ تخفیف
+          <div className="absolute right-3.5 top-3.5 z-[3] flex items-center gap-1.5 rounded-full bg-[var(--brand-orange-dark)] px-3 py-1.5 text-[9px] font-black text-white shadow-[0_10px_24px_rgba(225,76,43,0.24)]">
+            <span>{discount}٪</span>
+            <span>تخفیف</span>
           </div>
         )}
 
@@ -179,13 +209,20 @@ export function DietCard({
           aria-label={
             favorite ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'
           }
-          className="absolute left-3 top-3 z-[2] flex h-9 w-9 items-center justify-center rounded-full border border-white/90 bg-white/95 text-slate-500 shadow-sm transition-all duration-300 hover:scale-110 hover:text-[var(--brand-orange-dark)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--brand-orange)]/15"
+          className={[
+            'absolute left-3.5 top-3.5 z-[3] flex h-10 w-10 items-center justify-center rounded-full',
+            'border border-white/90 bg-white/90 text-slate-500',
+            'shadow-[0_8px_20px_rgba(15,23,42,0.08)] backdrop-blur-md',
+            'transition-all duration-300',
+            'hover:scale-110 hover:text-[var(--brand-orange-dark)]',
+            'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--brand-orange)]/15',
+          ].join(' ')}
         >
           <Heart
             className={
               favorite
-                ? 'h-[16px] w-[16px] fill-current text-[var(--brand-orange-dark)]'
-                : 'h-[16px] w-[16px]'
+                ? 'h-[17px] w-[17px] fill-current text-[var(--brand-orange-dark)]'
+                : 'h-[17px] w-[17px]'
             }
           />
         </button>
@@ -194,11 +231,11 @@ export function DietCard({
       <div
         className={[
           'flex flex-1 flex-col',
-          compact ? 'p-4' : 'p-4.5 sm:p-5',
+          compact ? 'px-4 pb-4 pt-3.5' : 'px-4.5 pb-5 pt-4.5',
         ].join(' ')}
       >
         {product.categories?.[0]?.name && (
-          <span className="mb-2.5 w-fit max-w-full rounded-full bg-[var(--brand-orange)]/10 px-2.5 py-1 text-[9px] font-black text-[var(--brand-orange-dark)]">
+          <span className="mb-2 block text-[9px] font-black tracking-[-0.01em] text-[var(--brand-orange-dark)] sm:text-[10px]">
             {product.categories[0].name}
           </span>
         )}
@@ -206,82 +243,89 @@ export function DietCard({
         <Link href={`/product/${product.slug}`}>
           <h3
             className={[
-              'line-clamp-2 font-black leading-6 text-slate-950 transition-colors hover:text-[var(--brand-orange-dark)]',
-              compact ? 'min-h-[48px] text-[13px]' : 'min-h-[50px] text-[14px]',
+              'line-clamp-2 font-black tracking-[-0.025em] text-slate-950 transition-colors',
+              'hover:text-[var(--brand-orange-dark)]',
+              compact
+                ? 'min-h-[48px] text-[13px] leading-6'
+                : 'min-h-[52px] text-[14px] leading-6',
             ].join(' ')}
           >
             {product.name}
           </h3>
         </Link>
+        <div className="mt-3 border-t border-slate-100 pt-3.5">
+          <div className="flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <span className="mb-1 block text-[9px] font-bold text-slate-400">
+                قیمت
+              </span>
 
-        {product.averageRating && (
-          <div className="mt-2.5 flex items-center gap-1.5">
-            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              {product.onSale && regularPrice > price ? (
+                <div className="flex flex-wrap items-end gap-x-1.5 gap-y-0.5">
+                  <strong
+                    className={[
+                      'font-black leading-none text-[var(--brand-orange-dark)]',
+                      compact ? 'text-[18px]' : 'text-[19px]',
+                    ].join(' ')}
+                  >
+                    {formatPrice(price)}
+                  </strong>
 
-            <span className="text-[10px] font-bold text-slate-500">
-              {product.averageRating}
-            </span>
+                  <span className="pb-0.5 text-[9px] font-bold text-slate-400">
+                    تومان
+                  </span>
+
+                  <del className="w-full text-[9px] font-medium text-slate-300">
+                    {formatPrice(regularPrice)}
+                  </del>
+                </div>
+              ) : (
+                <div className="flex items-end gap-1.5">
+                  <strong
+                    className={[
+                      'font-black leading-none text-slate-950',
+                      compact ? 'text-[18px]' : 'text-[19px]',
+                    ].join(' ')}
+                  >
+                    {formatPrice(price)}
+                  </strong>
+
+                  <span className="pb-0.5 text-[9px] font-bold text-slate-400">
+                    تومان
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {discount > 0 && (
+              <span className="shrink-0 rounded-full bg-orange-50 px-2 py-1 text-[8px] font-black text-[var(--brand-orange-dark)]">
+                خرید اقتصادی
+              </span>
+            )}
           </div>
-        )}
-
-        <div className="mt-auto pt-5">
-          <span className="mb-1 block text-[9px] font-medium text-slate-400">
-            قیمت رژیم
-          </span>
-
-          {product.onSale ? (
-            <div className="flex flex-wrap items-end gap-x-1.5 gap-y-1">
-              <strong
-                className={
-                  compact
-                    ? 'text-lg font-black text-[var(--brand-orange-dark)]'
-                    : 'text-xl font-black text-[var(--brand-orange-dark)]'
-                }
-              >
-                {formatPrice(price)}
-              </strong>
-
-              <span className="pb-0.5 text-[9px] text-slate-400">
-                تومان
-              </span>
-
-              <del className="pb-0.5 text-[9px] text-slate-400">
-                {formatPrice(regularPrice)}
-              </del>
-            </div>
-          ) : (
-            <div className="flex items-end gap-1.5">
-              <strong
-                className={
-                  compact
-                    ? 'text-lg font-black text-slate-950'
-                    : 'text-xl font-black text-slate-950'
-                }
-              >
-                {formatPrice(price)}
-              </strong>
-
-              <span className="pb-0.5 text-[9px] text-slate-400">
-                تومان
-              </span>
-            </div>
-          )}
 
           <button
             type="button"
             onClick={handleAddToCart}
             className={[
-              'mt-4 flex w-full items-center justify-center gap-2 bg-slate-950 font-black text-white shadow-[0_12px_25px_rgba(15,23,42,.10)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-[var(--brand-orange-dark)] hover:shadow-[0_14px_28px_rgba(225,76,43,.16)] active:translate-y-0 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--brand-orange)]/15',
+              'mt-4 flex w-full items-center justify-center gap-2 rounded-[14px]',
+              'bg-[var(--brand-orange-dark)] text-white',
+              'font-black shadow-[0_12px_24px_rgba(225,76,43,0.18)]',
+              'transition-all duration-300',
+              'hover:-translate-y-0.5 hover:brightness-95 hover:shadow-[0_16px_30px_rgba(225,76,43,0.24)]',
+              'active:translate-y-0',
+              'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--brand-orange)]/15',
               compact
-                ? 'h-11 rounded-xl text-[10px]'
-                : 'h-11 rounded-xl text-[11px] sm:text-xs',
+                ? 'h-11 text-[10px]'
+                : 'h-11 text-[11px] sm:text-xs',
             ].join(' ')}
           >
             <ShoppingCart className="h-3.5 w-3.5" />
-            افزودن به سبد
+            <span>افزودن به سبد خرید</span>
           </button>
         </div>
       </div>
     </article>
   );
 }
+
